@@ -185,3 +185,13 @@ Các thao tác Auth/Firestore/Storage thực tế chỉ có thể kiểm thử �
 
 - GitHub: https://github.com/CrissNguyenKhanh/Product-Management-App
 - Video demo: `[CHƯA CUNG CẤP — bổ sung link sau khi quay]`
+## Credits & Acknowledgments
+
+This project builds upon earlier work with
+contributions from @Lethailam.
+
+The User Management version was subsequently
+developed and adapted by the current maintainers.
+
+The original Git history is preserved in the
+`archive-original-history` branch.
