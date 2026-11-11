@@ -63,7 +63,7 @@ export default function LoginScreen() {
               <Ionicons color="#FFFFFF" name="people" size={42} />
             </View>
             <Text style={styles.title}>User Management</Text>
-            <Text style={styles.subtitle}>Đăng nhập bằng tài khoản Admin để quản lý người dùng.</Text>
+            <Text style={styles.subtitle}>Đăng nhập bằng tài khoản Admin để quản lý hồ sơ demo.</Text>
           </View>
 
           <View style={styles.card}>

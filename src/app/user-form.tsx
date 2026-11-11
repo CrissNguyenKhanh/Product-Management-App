@@ -19,20 +19,17 @@ import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { PrimaryButton } from '@/components/primary-button';
 import { UserAvatar } from '@/components/user-avatar';
-import { pickAvatar, removeAvatar, uploadAvatar } from '@/services/image-service';
+import { PASSWORD_PLACEHOLDER } from '@/models/user';
+import { pickAvatar } from '@/services/image-service';
 import { createManagedUser, fetchUser, updateManagedUser } from '@/services/user-service';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { getErrorMessage } from '@/utils/firebase-errors';
-import { validateEmail, validatePassword, validateUsername } from '@/utils/validation';
+import { validateEmail, validateUsername } from '@/utils/validation';
 
-type FieldErrors = Partial<Record<'username' | 'email' | 'password', string>>;
+type FieldErrors = Partial<Record<'username' | 'email', string>>;
 
 function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? '' : value ?? '';
-}
-
-function isRemoteImage(uri: string): boolean {
-  return /^https?:\/\//i.test(uri);
 }
 
 export default function UserFormScreen() {
@@ -41,9 +38,7 @@ export default function UserFormScreen() {
   const editing = Boolean(uid);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [avatarUri, setAvatarUri] = useState('');
-  const [initialAvatar, setInitialAvatar] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(editing);
   const [submitting, setSubmitting] = useState(false);
@@ -62,8 +57,7 @@ export default function UserFormScreen() {
         }
         setUsername(user.username);
         setEmail(user.email);
-        setAvatarUri(user.image);
-        setInitialAvatar(user.image);
+        setAvatarUri(user.image.startsWith('data:image/jpeg;base64,') ? user.image : '');
       })
       .catch((error) => active && setLoadError(getErrorMessage(error)))
       .finally(() => active && setLoading(false));
@@ -73,7 +67,7 @@ export default function UserFormScreen() {
     };
   }, [uid]);
 
-  const title = useMemo(() => (editing ? 'Chỉnh sửa người dùng' : 'Thêm người dùng'), [editing]);
+  const title = useMemo(() => (editing ? 'Chỉnh sửa hồ sơ' : 'Thêm hồ sơ'), [editing]);
 
   async function handlePickAvatar() {
     try {
@@ -88,10 +82,8 @@ export default function UserFormScreen() {
     const nextErrors: FieldErrors = {};
     const usernameError = validateUsername(username);
     const emailError = validateEmail(email);
-    const passwordError = validatePassword(password, !editing);
     if (usernameError) nextErrors.username = usernameError;
     if (emailError) nextErrors.email = emailError;
-    if (passwordError) nextErrors.password = passwordError;
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
@@ -100,56 +92,33 @@ export default function UserFormScreen() {
     if (submitting || !validate()) return;
 
     setSubmitting(true);
-    let targetUid = uid;
-    let userCreated = false;
 
     try {
-      if (!editing) {
-        targetUid = await createManagedUser({
-          username: username.trim(),
-          email: email.trim().toLowerCase(),
-          password,
-          image: '',
-        });
-        userCreated = true;
-      }
+      const input = {
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
+        image: avatarUri,
+      };
+      let targetUid = uid;
 
-      let finalImage = avatarUri;
-      if (avatarUri && !isRemoteImage(avatarUri)) {
-        finalImage = await uploadAvatar(targetUid, avatarUri);
-      }
-
-      if (editing || finalImage) {
+      if (editing) {
         await updateManagedUser({
-          uid: targetUid,
-          username: username.trim(),
-          email: email.trim().toLowerCase(),
-          image: finalImage,
-          ...(password ? { newPassword: password } : {}),
+          uid,
+          ...input,
         });
+      } else {
+        targetUid = await createManagedUser(input);
       }
 
-      if (editing && initialAvatar && initialAvatar !== finalImage) {
-        await removeAvatar(initialAvatar).catch(() => undefined);
-      }
-
-      Alert.alert('Thành công', editing ? 'Thông tin người dùng đã được cập nhật.' : 'Người dùng mới đã được tạo.');
+      Alert.alert(
+        'Thành công',
+        editing
+          ? 'Hồ sơ demo trên Firestore đã được cập nhật.'
+          : 'Hồ sơ demo đã được thêm. Hồ sơ này không phải tài khoản đăng nhập.',
+      );
       router.replace({ pathname: '/user-detail', params: { uid: targetUid } });
     } catch (error) {
-      if (userCreated && targetUid) {
-        Alert.alert(
-          'Đã tạo tài khoản nhưng chưa hoàn tất',
-          `${getErrorMessage(error)} Bạn có thể mở người dùng và cập nhật lại ảnh.`,
-          [
-            {
-              text: 'Xem người dùng',
-              onPress: () => router.replace({ pathname: '/user-detail', params: { uid: targetUid } }),
-            },
-          ],
-        );
-      } else {
-        Alert.alert(editing ? 'Không thể cập nhật' : 'Không thể thêm người dùng', getErrorMessage(error));
-      }
+      Alert.alert(editing ? 'Không thể cập nhật' : 'Không thể thêm hồ sơ', getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
@@ -159,7 +128,7 @@ export default function UserFormScreen() {
     <AdminGate>
       <AppScreen
         right={<IconButton icon="close" label="Đóng" onPress={() => router.back()} />}
-        subtitle={editing ? 'Cập nhật tài khoản Firebase an toàn' : 'Tạo tài khoản Firebase mới'}
+        subtitle="Hồ sơ demo trên Cloud Firestore — không tạo tài khoản đăng nhập"
         title={title}>
         {loading ? (
           <LoadingView label="Đang tải thông tin người dùng..." />
@@ -189,7 +158,9 @@ export default function UserFormScreen() {
                     </Pressable>
                   ) : null}
                 </View>
-                <Text style={styles.imageHint}>Ảnh là tùy chọn, tối đa 5 MB.</Text>
+                <Text style={styles.imageHint}>
+                  Ảnh được nén thành JPEG và lưu trong Firestore, tối đa 180.000 ký tự.
+                </Text>
               </View>
 
               <View style={styles.formCard}>
@@ -220,30 +191,24 @@ export default function UserFormScreen() {
                   value={email}
                 />
                 <FormField
-                  autoCapitalize="none"
-                  autoComplete="new-password"
-                  error={errors.password}
-                  label={editing ? 'Mật khẩu mới (không bắt buộc)' : 'Mật khẩu'}
+                  editable={false}
+                  label="Password demo (không dùng để đăng nhập)"
                   leftIcon="lock-closed-outline"
-                  onChangeText={(value) => {
-                    setPassword(value);
-                    setErrors((current) => ({ ...current, password: undefined }));
-                  }}
-                  placeholder={editing ? 'Để trống nếu không đổi' : 'Tối thiểu 6 ký tự'}
-                  secureTextEntry
-                  value={password}
+                  onChangeText={() => undefined}
+                  value={PASSWORD_PLACEHOLDER}
                 />
 
                 <View style={styles.securityNote}>
                   <Ionicons color={colors.success} name="shield-checkmark-outline" size={22} />
                   <Text style={styles.securityText}>
-                    Mật khẩu thật chỉ do Firebase Authentication quản lý và không được lưu trong Firestore.
+                    Ứng dụng không thu thập hoặc lưu mật khẩu người dùng. Firestore chỉ lưu{' '}
+                    {PASSWORD_PLACEHOLDER}; các hồ sơ này không thể đăng nhập Firebase Authentication.
                   </Text>
                 </View>
 
                 <PrimaryButton
                   icon={editing ? 'save-outline' : 'person-add-outline'}
-                  label={editing ? 'Lưu thay đổi' : 'Thêm người dùng'}
+                  label={editing ? 'Lưu thay đổi' : 'Thêm hồ sơ demo'}
                   loading={submitting}
                   onPress={handleSubmit}
                 />

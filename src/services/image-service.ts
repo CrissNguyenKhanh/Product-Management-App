@@ -1,7 +1,44 @@
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
-import { storage } from '@/config/firebase';
+import { MAX_IMAGE_DATA_URI_LENGTH } from '@/models/user';
+
+const JPEG_PREFIX = 'data:image/jpeg;base64,';
+
+const COMPRESSION_ATTEMPTS = [
+  { width: 512, compress: 0.55 },
+  { width: 448, compress: 0.5 },
+  { width: 384, compress: 0.45 },
+  { width: 320, compress: 0.4 },
+  { width: 256, compress: 0.35 },
+  { width: 224, compress: 0.3 },
+  { width: 192, compress: 0.25 },
+] as const;
+
+async function createJpegDataUri(uri: string, width: number, compress: number): Promise<string> {
+  const context = ImageManipulator.manipulate(uri);
+  try {
+    context.resize({ width, height: null });
+    const image = await context.renderAsync();
+    try {
+      const result = await image.saveAsync({
+        base64: true,
+        compress,
+        format: SaveFormat.JPEG,
+      });
+
+      if (!result.base64) {
+        throw new Error('Không thể chuyển ảnh sang dữ liệu JPEG.');
+      }
+
+      return `${JPEG_PREFIX}${result.base64}`;
+    } finally {
+      image.release();
+    }
+  } finally {
+    context.release();
+  }
+}
 
 export async function pickAvatar(): Promise<string | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -17,34 +54,17 @@ export async function pickAvatar(): Promise<string | null> {
     selectionLimit: 1,
   });
 
-  return result.canceled ? null : result.assets[0]?.uri ?? null;
-}
+  if (result.canceled) return null;
 
-function extensionForUri(uri: string): string {
-  const cleanUri = uri.split('?')[0];
-  const extension = cleanUri.split('.').pop()?.toLowerCase();
-  return extension && /^[a-z0-9]+$/.test(extension) ? extension : 'jpg';
-}
+  const uri = result.assets[0]?.uri;
+  if (!uri) throw new Error('Không thể đọc ảnh đã chọn.');
 
-export async function uploadAvatar(uid: string, uri: string): Promise<string> {
-  const response = await fetch(uri);
-  if (!response.ok) throw new Error('Không thể đọc ảnh đã chọn.');
-
-  const blob = await response.blob();
-  if (blob.size > 5 * 1024 * 1024) {
-    throw new Error('Ảnh phải nhỏ hơn 5 MB.');
+  for (const attempt of COMPRESSION_ATTEMPTS) {
+    const dataUri = await createJpegDataUri(uri, attempt.width, attempt.compress);
+    if (dataUri.length <= MAX_IMAGE_DATA_URI_LENGTH) return dataUri;
   }
 
-  const objectRef = ref(storage, `users/${uid}/avatar-${Date.now()}.${extensionForUri(uri)}`);
-  await uploadBytes(objectRef, blob, { contentType: blob.type || 'image/jpeg' });
-  return getDownloadURL(objectRef);
-}
-
-export async function removeAvatar(downloadUrl: string): Promise<void> {
-  if (!downloadUrl) return;
-  try {
-    await deleteObject(ref(storage, downloadUrl));
-  } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes('object-not-found')) throw error;
-  }
+  throw new Error(
+    'Ảnh vẫn vượt quá giới hạn 180.000 ký tự sau khi nén. Vui lòng chọn ảnh đơn giản hoặc nhỏ hơn.',
+  );
 }

@@ -20,7 +20,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { StateView } from '@/components/state-view';
 import { UserAvatar } from '@/components/user-avatar';
 import { useUsers } from '@/hooks/use-users';
-import { ManagedUser } from '@/models/user';
+import { ManagedUser, PASSWORD_PLACEHOLDER } from '@/models/user';
 import { deleteManagedUser } from '@/services/user-service';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { getErrorMessage } from '@/utils/firebase-errors';
@@ -45,7 +45,7 @@ function UserCard({
           <Text numberOfLines={1} style={styles.email}>
             {user.email}
           </Text>
-          <Text style={styles.password}>Mật khẩu: ********</Text>
+          <Text style={styles.password}>Password demo: {PASSWORD_PLACEHOLDER}</Text>
         </View>
       </View>
       <View style={styles.actions}>
@@ -91,7 +91,7 @@ export default function UsersScreen() {
   }, [query, users]);
 
   function confirmDelete(user: ManagedUser) {
-    Alert.alert('Xóa người dùng?', `${user.username} và tài khoản đăng nhập tương ứng sẽ bị xóa.`, [
+    Alert.alert('Xóa hồ sơ?', `${user.username} chỉ bị xóa khỏi collection users trong Firestore.`, [
       { text: 'Hủy', style: 'cancel' },
       {
         text: 'Xóa',
@@ -100,7 +100,7 @@ export default function UsersScreen() {
           setDeletingId(user.id);
           try {
             await deleteManagedUser(user.id);
-            Alert.alert('Đã xóa', 'Người dùng đã được xóa khỏi hệ thống.');
+            Alert.alert('Đã xóa', 'Hồ sơ demo đã được xóa khỏi Firestore.');
           } catch (nextError) {
             Alert.alert('Không thể xóa', getErrorMessage(nextError));
           } finally {
@@ -115,7 +115,7 @@ export default function UsersScreen() {
     <AdminGate>
       <AppScreen
         right={<PrimaryButton compact icon="person-add-outline" label="Thêm" onPress={() => router.push('/user-form')} />}
-        subtitle={`${users.length} người dùng`}
+        subtitle={`${users.length} hồ sơ demo`}
         title="Danh sách người dùng">
         <View style={styles.toolbar}>
           <IconButton icon="arrow-back" label="Quay lại Dashboard" onPress={() => router.back()} />
@@ -143,7 +143,7 @@ export default function UsersScreen() {
         </View>
 
         {loading ? (
-          <LoadingView label="Đang tải người dùng từ Firebase..." />
+          <LoadingView label="Đang tải hồ sơ từ Firestore..." />
         ) : (
           <FlatList
             contentContainerStyle={styles.listContent}
@@ -167,7 +167,7 @@ export default function UsersScreen() {
               ) : (
                 <StateView
                   actionLabel="Thêm người dùng"
-                  message="Tạo người dùng đầu tiên để bắt đầu quản lý."
+                  message="Tạo hồ sơ demo đầu tiên để bắt đầu quản lý."
                   onAction={() => router.push('/user-form')}
                   title="Danh sách đang trống"
                 />

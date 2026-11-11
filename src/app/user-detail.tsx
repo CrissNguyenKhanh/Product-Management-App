@@ -10,7 +10,7 @@ import { LoadingView } from '@/components/loading-view';
 import { PrimaryButton } from '@/components/primary-button';
 import { StateView } from '@/components/state-view';
 import { UserAvatar } from '@/components/user-avatar';
-import { ManagedUser } from '@/models/user';
+import { ManagedUser, PASSWORD_PLACEHOLDER } from '@/models/user';
 import { deleteManagedUser, fetchUser } from '@/services/user-service';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { getErrorMessage } from '@/utils/firebase-errors';
@@ -53,7 +53,7 @@ export default function UserDetailScreen() {
 
   const loadUser = useCallback(async () => {
     if (!uid) {
-      setError('Thiếu mã định danh người dùng.');
+      setError('Thiếu mã định danh hồ sơ.');
       setLoading(false);
       return;
     }
@@ -62,7 +62,7 @@ export default function UserDetailScreen() {
     try {
       const result = await fetchUser(uid);
       setUser(result);
-      setError(result ? '' : 'Người dùng không còn tồn tại.');
+      setError(result ? '' : 'Hồ sơ không còn tồn tại.');
     } catch (nextError) {
       setError(getErrorMessage(nextError));
     } finally {
@@ -78,40 +78,44 @@ export default function UserDetailScreen() {
 
   function confirmDelete() {
     if (!user || deleting) return;
-    Alert.alert('Xóa người dùng?', `${user.username} sẽ bị xóa vĩnh viễn khỏi Auth, Firestore và Storage.`, [
-      { text: 'Hủy', style: 'cancel' },
-      {
-        text: 'Xóa',
-        style: 'destructive',
-        onPress: async () => {
-          setDeleting(true);
-          try {
-            await deleteManagedUser(user.id);
-            Alert.alert('Đã xóa', 'Người dùng đã được xóa khỏi hệ thống.');
-            router.replace('/users');
-          } catch (nextError) {
-            Alert.alert('Không thể xóa', getErrorMessage(nextError));
-          } finally {
-            setDeleting(false);
-          }
+    Alert.alert(
+      'Xóa hồ sơ?',
+      `${user.username} sẽ bị xóa khỏi collection users. Tài khoản Admin Authentication không bị thay đổi.`,
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await deleteManagedUser(user.id);
+              Alert.alert('Đã xóa', 'Hồ sơ demo đã được xóa khỏi Firestore.');
+              router.replace('/users');
+            } catch (nextError) {
+              Alert.alert('Không thể xóa', getErrorMessage(nextError));
+            } finally {
+              setDeleting(false);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   }
 
   return (
     <AdminGate>
       <AppScreen
         right={<IconButton icon="close" label="Đóng" onPress={() => router.back()} />}
-        subtitle="Thông tin tài khoản Firebase"
-        title="Chi tiết người dùng">
+        subtitle="Hồ sơ demo Firestore — không phải tài khoản đăng nhập"
+        title="Chi tiết hồ sơ">
         {loading ? (
           <LoadingView label="Đang tải chi tiết..." />
         ) : error || !user ? (
           <StateView
             actionLabel="Quay lại danh sách"
             icon="alert-circle-outline"
-            message={error || 'Không tìm thấy người dùng.'}
+            message={error || 'Không tìm thấy hồ sơ.'}
             onAction={() => router.replace('/users')}
             title="Không thể hiển thị"
           />
@@ -128,12 +132,16 @@ export default function UserDetailScreen() {
               <View style={styles.divider} />
               <DetailRow icon="mail-outline" label="Email" value={user.email} />
               <View style={styles.divider} />
-              <DetailRow icon="lock-closed-outline" label="Password" value="********" />
+              <DetailRow
+                icon="lock-closed-outline"
+                label="Password demo"
+                value={PASSWORD_PLACEHOLDER}
+              />
               <View style={styles.divider} />
               <DetailRow
                 icon="image-outline"
                 label="Image"
-                value={user.image ? 'Đã có ảnh đại diện' : 'Chưa có ảnh đại diện'}
+                value={user.image ? 'JPEG data URI đã lưu trong Firestore' : 'Chưa có ảnh đại diện'}
               />
             </View>
 

@@ -1,23 +1,26 @@
 import {
+  addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   onSnapshot,
+  updateDoc,
   Unsubscribe,
 } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
 
-import { db, functions } from '@/config/firebase';
+import { db } from '@/config/firebase';
 import {
   CreateManagedUserInput,
+  MAX_IMAGE_DATA_URI_LENGTH,
   ManagedUser,
   PASSWORD_PLACEHOLDER,
+  UserDocument,
   UpdateManagedUserInput,
 } from '@/models/user';
 
-type CreateUserResult = { uid: string };
-type OperationResult = { ok: true };
+const JPEG_DATA_URI_PATTERN = /^data:image\/jpeg;base64,[A-Za-z0-9+/]*={0,2}$/;
 
 function fromSnapshot(id: string, data: Record<string, unknown>): ManagedUser {
   return {
@@ -31,6 +34,26 @@ function fromSnapshot(id: string, data: Record<string, unknown>): ManagedUser {
 
 function sortUsers(users: ManagedUser[]): ManagedUser[] {
   return users.sort((a, b) => a.username.localeCompare(b.username, 'vi'));
+}
+
+function toDocument(input: CreateManagedUserInput): UserDocument {
+  const username = input.username.trim();
+  const email = input.email.trim().toLowerCase();
+  const image = input.image.trim();
+
+  if (image.length > MAX_IMAGE_DATA_URI_LENGTH) {
+    throw new Error('Ảnh vượt quá giới hạn 180.000 ký tự. Vui lòng chọn ảnh khác.');
+  }
+  if (image && !JPEG_DATA_URI_PATTERN.test(image)) {
+    throw new Error('Ảnh phải là JPEG data URI do ứng dụng tạo. Vui lòng chọn lại ảnh.');
+  }
+
+  return {
+    username,
+    email,
+    password: PASSWORD_PLACEHOLDER,
+    image,
+  };
 }
 
 export function subscribeToUsers(
@@ -58,26 +81,17 @@ export async function fetchUser(uid: string): Promise<ManagedUser | null> {
 }
 
 export async function createManagedUser(input: CreateManagedUserInput): Promise<string> {
-  const callable = httpsCallable<CreateManagedUserInput, CreateUserResult>(
-    functions,
-    'createManagedUser',
-  );
-  const result = await callable(input);
-  return result.data.uid;
+  const reference = await addDoc(collection(db, 'users'), toDocument(input));
+  return reference.id;
 }
 
 export async function updateManagedUser(input: UpdateManagedUserInput): Promise<void> {
-  const callable = httpsCallable<UpdateManagedUserInput, OperationResult>(
-    functions,
-    'updateManagedUser',
+  await updateDoc(
+    doc(db, 'users', input.uid),
+    toDocument({ username: input.username, email: input.email, image: input.image }),
   );
-  await callable(input);
 }
 
 export async function deleteManagedUser(uid: string): Promise<void> {
-  const callable = httpsCallable<{ uid: string }, OperationResult>(
-    functions,
-    'deleteManagedUser',
-  );
-  await callable({ uid });
+  await deleteDoc(doc(db, 'users', uid));
 }

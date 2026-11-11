@@ -65,9 +65,9 @@ export default function DashboardScreen() {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.hero}>
             <View>
-              <Text style={styles.eyebrow}>TỔNG NGƯỜI DÙNG</Text>
+              <Text style={styles.eyebrow}>TỔNG HỒ SƠ DEMO</Text>
               <Text style={styles.total}>{loading ? '—' : users.length}</Text>
-              <Text style={styles.totalHint}>Tài khoản được quản lý trên Firebase</Text>
+              <Text style={styles.totalHint}>Document được quản lý trên Cloud Firestore</Text>
             </View>
             <View style={styles.heroIcon}>
               <Ionicons color="#FFFFFF" name="people" size={34} />
@@ -83,16 +83,16 @@ export default function DashboardScreen() {
 
           <Text style={styles.sectionTitle}>Quản trị nhanh</Text>
           <MenuCard
-            description="Tìm kiếm, xem, sửa hoặc xóa tài khoản"
+            description="Tìm kiếm, xem, sửa hoặc xóa hồ sơ Firestore"
             icon="people-outline"
             onPress={() => router.push('/users')}
             title="Quản lý người dùng"
           />
           <MenuCard
-            description="Tạo tài khoản mới và chọn ảnh đại diện"
+            description="Tạo hồ sơ demo và chọn ảnh đại diện JPEG"
             icon="person-add-outline"
             onPress={() => router.push('/user-form')}
-            title="Thêm người dùng"
+            title="Thêm hồ sơ demo"
           />
         </ScrollView>
       </AppScreen>

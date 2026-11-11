@@ -6,15 +6,11 @@ const messages: Record<string, string> = {
   'auth/network-request-failed': 'Không thể kết nối Firebase. Hãy kiểm tra mạng.',
   'auth/too-many-requests': 'Có quá nhiều lần thử. Vui lòng thử lại sau.',
   'auth/user-disabled': 'Tài khoản này đã bị vô hiệu hóa.',
-  'functions/already-exists': 'Email này đã được sử dụng.',
-  'functions/invalid-argument': 'Dữ liệu gửi lên không hợp lệ.',
-  'functions/permission-denied': 'Tài khoản không có quyền Admin.',
-  'functions/unauthenticated': 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-  'functions/unavailable': 'Dịch vụ đang tạm thời không khả dụng.',
-  'functions/not-found': 'Không tìm thấy người dùng.',
-  'permission-denied': 'Bạn không có quyền truy cập dữ liệu này.',
-  'storage/unauthorized': 'Bạn không có quyền truy cập ảnh.',
-  'storage/retry-limit-exceeded': 'Tải ảnh thất bại do kết nối không ổn định.',
+  'permission-denied': 'Tài khoản hiện tại không có quyền Admin để truy cập dữ liệu.',
+  unavailable: 'Firestore đang tạm thời không khả dụng. Hãy kiểm tra kết nối mạng.',
+  'resource-exhausted': 'Đã vượt quota Firestore miễn phí. Vui lòng thử lại sau.',
+  'failed-precondition': 'Firestore chưa được cấu hình đúng hoặc thao tác chưa đáp ứng điều kiện.',
+  'not-found': 'Không tìm thấy hồ sơ người dùng.',
 };
 
 export function getErrorMessage(error: unknown): string {

@@ -1,124 +1,82 @@
-# User Management App — React Native & Firebase
+# User Management App — Firebase Spark
 
-Ứng dụng di động dành cho Admin để quản lý tài khoản người dùng trên Firebase. Source được xây dựng bằng Expo SDK 58, TypeScript, Expo Router và Firebase; dữ liệu chính không dùng mock.
+Ứng dụng React Native dành cho Admin để quản lý **hồ sơ người dùng demo** bằng Expo SDK 58, TypeScript, Expo Router và Firebase. Phiên bản này chạy trên gói Firebase Spark, không dùng Cloud Functions hoặc Firebase Storage.
 
-## Chức năng
+## Phạm vi chức năng
 
-- Đăng nhập Admin bằng Firebase Authentication và kiểm tra custom claim `admin`.
-- Dashboard hiển thị email Admin và tổng số người dùng theo thời gian thực.
-- Danh sách người dùng, tìm kiếm theo username/email và pull-to-refresh.
-- Xem chi tiết, thêm, sửa và xóa người dùng.
-- Chọn ảnh từ thư viện, xem trước và tải ảnh lên Firebase Storage.
-- Đổi email, username, ảnh và mật khẩu bằng backend có Firebase Admin SDK.
-- Loading, empty state, validation, xác nhận xóa và thông báo lỗi rõ ràng.
+- Firebase Authentication chỉ đăng nhập tài khoản Admin hiện có và kiểm tra custom claim `admin: true`.
+- Dashboard, danh sách thời gian thực, tìm kiếm, pull-to-refresh, xem chi tiết, thêm, sửa và xóa hồ sơ.
+- CRUD `users` thực hiện trực tiếp bằng Firestore Client SDK (`addDoc`, `getDoc`, `onSnapshot`, `updateDoc`, `deleteDoc`).
+- Chọn ảnh trên iPhone bằng Expo Image Picker, nén thành JPEG và lưu data URI base64 trong Firestore.
+- Đăng xuất, validation, loading/error/empty state và xác nhận trước khi xóa.
 
-## Mô hình bảo mật
+Ứng dụng **không** tạo, sửa mật khẩu hoặc xóa tài khoản Firebase Authentication cho các hồ sơ trong `users`. Tài khoản Admin hiện có không bị thay đổi bởi CRUD hồ sơ.
 
-Ứng dụng client không tạo tài khoản phụ bằng `createUserWithEmailAndPassword`, vì thao tác đó sẽ thay phiên đăng nhập hiện tại. Các thao tác đặc quyền đi qua callable Cloud Functions:
+## Dữ liệu Firestore
 
-1. Client gửi Firebase ID token tự động qua Firebase Functions SDK.
-2. Function kiểm tra `request.auth.token.admin === true`.
-3. Firebase Admin SDK thực hiện tạo/cập nhật/xóa tài khoản Authentication.
-4. Function đồng bộ document Firestore theo đúng bốn trường của đề.
-
-Mật khẩu thật chỉ tồn tại trong Firebase Authentication. Firestore chỉ lưu giá trị đại diện không nhạy cảm:
+Collection nghiệp vụ duy nhất là `users`. Mỗi document có đúng bốn trường:
 
 ```json
 {
   "username": "nguyenvana",
   "email": "user@example.com",
-  "password": "[managed-by-firebase-auth]",
-  "image": ""
+  "password": "[demo-no-login]",
+  "image": "data:image/jpeg;base64,..."
 }
 ```
 
-Firebase Auth UID được dùng làm document ID. Không có trường `id`, `role`, `createdAt` hoặc dữ liệu ngoài bốn trường trên trong document người dùng.
+- Document ID do Firestore tạo và chỉ là định danh kỹ thuật.
+- `password` luôn là chuỗi đại diện `[demo-no-login]`; app không thu thập hay lưu mật khẩu thật.
+- Hồ sơ trong `users` không phải tài khoản đăng nhập.
+- `image` là chuỗi rỗng hoặc JPEG data URI tối đa 180.000 ký tự. Ảnh nằm trong document nên vẫn hiển thị sau khi đóng/mở app.
 
-## Kiến trúc
+## Kiến trúc và bảo mật
 
 ```text
 Expo app
-  ├─ Firebase Authentication ── đăng nhập Admin + custom claim
-  ├─ Cloud Firestore ────────── đọc danh sách/chi tiết users
-  ├─ Cloud Storage ──────────── avatar users/{uid}/...
-  └─ Callable Functions ─────── CRUD Auth + ghi Firestore bằng Admin SDK
+  ├─ Firebase Authentication ── đăng nhập Admin hiện có
+  └─ Cloud Firestore
+       └─ users/{documentId} ─── CRUD hồ sơ + JPEG data URI
 ```
 
-Các thư mục chính:
+Firestore Security Rules yêu cầu người dùng đã đăng nhập có `request.auth.token.admin == true` cho mọi thao tác đọc/ghi/xóa `users`. Rules chỉ chấp nhận đúng bốn trường, kiểm tra kiểu/độ dài, bắt buộc password đại diện và từ chối mọi collection khác.
 
-```text
-src/app/          Màn hình và route Expo Router
-src/components/   Thành phần giao diện dùng lại
-src/config/       Khởi tạo Firebase duy nhất
-src/contexts/     Trạng thái đăng nhập Admin
-src/services/     Firestore, callable Functions và Storage
-src/models/       Kiểu dữ liệu người dùng
-src/utils/        Validation và ánh xạ lỗi
-functions/src/    Backend Firebase Admin SDK
-docs/             Báo cáo và hướng dẫn demo
-```
+## Giới hạn gói Spark
 
-## Yêu cầu môi trường
+Thiết kế không cần billing account, Cloud Functions hay Cloud Storage. Ứng dụng chạy miễn phí khi nằm trong quota Firestore Spark: một database miễn phí mỗi project, 1 GiB dữ liệu, 50.000 lượt đọc/ngày, 20.000 lượt ghi/ngày, 20.000 lượt xóa/ngày và 10 GiB outbound/tháng. Khi vượt quota, thao tác bị giới hạn thay vì tự động tính phí; muốn tăng quota phải bật billing.
 
-- Node.js 22.13 trở lên.
-- npm.
-- Expo Go tương thích SDK 58 trên iPhone.
-- Firebase CLI nếu deploy backend/rules: `npm install -g firebase-tools`.
-- Firebase project `product-management-app-239fa`.
-- Blaze plan để deploy Cloud Functions và sử dụng Cloud Storage theo yêu cầu hiện tại của Firebase.
+Vì ảnh base64 được lưu cùng document, mỗi lần đọc hồ sơ cũng tải dữ liệu ảnh. Giới hạn riêng 180.000 ký tự giúp giữ document nhỏ hơn giới hạn Firestore và phù hợp ứng dụng học tập; đây không phải phương án nên dùng cho ảnh độ phân giải cao hoặc hệ thống lớn.
 
 ## Cài đặt
+
+Yêu cầu Node.js, npm và Expo Go hỗ trợ SDK 58.
 
 ```powershell
 git clone https://github.com/CrissNguyenKhanh/Product-Management-App.git
 cd Product-Management-App
 git switch original-rebuild
 npm install
-npm --prefix functions install
 Copy-Item .env.example .env
 ```
 
-Firebase Web config đã được đặt trong `.env.example`. Firebase Web API key là định danh phía client, không phải service-account private key. Không commit service-account JSON hoặc private key.
+Firebase Web config trong `.env.example` là cấu hình client, không phải service-account private key. Không commit service-account JSON hoặc khóa riêng.
 
 ## Cấu hình Firebase
 
 Trong Firebase Console:
 
-1. Bật Authentication → Sign-in method → Email/Password.
-2. Tạo Cloud Firestore database.
-3. Bật Storage nếu cần avatar.
-4. Chọn Blaze plan trước khi deploy Functions/Storage nếu Firebase yêu cầu.
-5. Đăng nhập Firebase CLI và chọn đúng project:
+1. Giữ nguyên tài khoản Admin Email/Password hiện có và custom claim `admin: true`.
+2. Bật Email/Password Authentication nếu project chưa bật.
+3. Tạo Cloud Firestore database.
+4. Deploy Firestore Rules và indexes:
 
 ```powershell
 firebase login
 firebase use product-management-app-239fa
+firebase deploy --only firestore:rules,firestore:indexes
 ```
 
-Deploy backend và security rules:
-
-```powershell
-npm --prefix functions run build
-firebase deploy --only functions
-firebase deploy --only firestore:rules,firestore:indexes,storage
-```
-
-Functions được triển khai tại region `asia-southeast1`. Client dùng cùng region qua `EXPO_PUBLIC_FIREBASE_FUNCTIONS_REGION`.
-
-## Tạo Admin đầu tiên
-
-1. Tạo một tài khoản Email/Password trong Firebase Authentication Console.
-2. Tải service-account JSON về một thư mục riêng ngoài repository.
-3. Trong PowerShell hiện tại, trỏ Application Default Credentials đến file đó:
-
-```powershell
-$env:GOOGLE_APPLICATION_CREDENTIALS = 'C:\secure\product-management-admin.json'
-npm --prefix functions run set-admin -- admin@example.com
-```
-
-4. Đăng xuất và đăng nhập lại để ID token nhận custom claim mới.
-
-Script không hardcode email Admin và giữ lại các custom claims hiện có.
+Không cần bật Storage, deploy Functions hoặc nâng project lên Blaze. Sau khi custom claim Admin được thay đổi ngoài app, Admin phải đăng xuất/đăng nhập lại để token mới nhận claim.
 
 ## Chạy trên iPhone bằng Expo Go
 
@@ -127,44 +85,33 @@ npm install
 npx expo start --clear
 ```
 
-Sau đó mở Expo Go trên iPhone, bảo đảm máy tính và điện thoại cùng mạng, rồi quét QR. Nếu mạng LAN chặn kết nối, dùng:
+Mở Expo Go trên iPhone, bảo đảm iPhone và máy tính cùng mạng rồi quét QR. Nếu LAN chặn kết nối:
 
 ```powershell
 npx expo start --tunnel --clear
 ```
 
+Đăng nhập bằng tài khoản Admin hiện có. Khi chọn ảnh, app crop 1:1, thử nhiều mức resize/nén JPEG và chỉ chấp nhận kết quả không quá 180.000 ký tự. Nếu vẫn quá giới hạn, app báo lỗi để chọn ảnh khác.
+
 ## Kiểm tra source
 
 ```powershell
-npm run verify
+npm install
 npx expo install --check
-npx expo-doctor
-npm audit --omit=dev
+npx tsc --noEmit
+npm run lint
 ```
 
-Kết quả gần nhất ngày 12/11/2026:
+`npm run verify` chạy TypeScript và ESLint. Không dùng `--force` và không tự nâng Expo.
 
-- TypeScript app: đạt.
-- ESLint: đạt.
-- Cloud Functions TypeScript build: đạt.
-- Expo dependency check: đạt.
-- Expo Doctor: 20/20 checks đạt.
-- Production dependency audit: 0 vulnerabilities.
-- Cloud Functions production audit: 0 vulnerabilities.
-- Expo Router web export: đạt.
-- Metro `expo start --clear`: khởi động thành công và tạo QR Expo Go.
+## Kịch bản demo
 
-Kiểm thử end-to-end trên iPhone và Firebase production cần thực hiện sau khi Functions, rules, Storage và tài khoản Admin đầu tiên đã được cấu hình. Không xem các bước đó là đã đạt khi chưa chạy thực tế.
+1. Đăng nhập Admin và xem Dashboard.
+2. Thêm hồ sơ demo với username, email và ảnh.
+3. Xác nhận `password` hiển thị `[demo-no-login]` và hồ sơ không có chức năng đăng nhập.
+4. Tìm kiếm, xem chi tiết, sửa hồ sơ và thay ảnh.
+5. Đóng/mở app để kiểm tra ảnh được tải lại từ Firestore.
+6. Hủy rồi xác nhận xóa document.
+7. Đăng xuất Admin.
 
-## Kịch bản demo giữa kỳ
-
-1. Đăng nhập sai và quan sát thông báo lỗi.
-2. Đăng nhập Admin thành công.
-3. Xem tổng người dùng trên Dashboard.
-4. Thêm người dùng với ảnh đại diện.
-5. Tìm kiếm và mở màn hình chi tiết.
-6. Sửa username/email, thay ảnh và đặt mật khẩu mới.
-7. Thử hủy xóa, sau đó xác nhận xóa.
-8. Đăng xuất và mở lại ứng dụng để kiểm tra phiên đăng nhập.
-
-Xem thêm [báo cáo giữa kỳ](docs/BAO_CAO_GIUA_KY.md) và [hướng dẫn chụp ảnh iPhone](docs/HUONG_DAN_CHUP_ANH_IPHONE.md).
+Xem [báo cáo giữa kỳ](docs/BAO_CAO_GIUA_KY.md) và [hướng dẫn chụp ảnh iPhone](docs/HUONG_DAN_CHUP_ANH_IPHONE.md).

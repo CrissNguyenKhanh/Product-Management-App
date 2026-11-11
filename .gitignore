@@ -42,10 +42,6 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# Cloud Functions output
-functions/lib/
-functions/node_modules/
-
 # Local package backup files from earlier dependency work
 package*.before-fix.json
 package*.sdk58-backup.json

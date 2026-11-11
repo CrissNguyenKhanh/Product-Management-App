@@ -1,4 +1,5 @@
-export const PASSWORD_PLACEHOLDER = '[managed-by-firebase-auth]';
+export const PASSWORD_PLACEHOLDER = '[demo-no-login]';
+export const MAX_IMAGE_DATA_URI_LENGTH = 180_000;
 
 export type ManagedUser = {
   id: string;
@@ -13,7 +14,6 @@ export type UserDocument = Omit<ManagedUser, 'id'>;
 export type CreateManagedUserInput = {
   username: string;
   email: string;
-  password: string;
   image: string;
 };
 
@@ -22,5 +22,4 @@ export type UpdateManagedUserInput = {
   username: string;
   email: string;
   image: string;
-  newPassword?: string;
 };
