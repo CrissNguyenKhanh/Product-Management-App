@@ -64,7 +64,7 @@ Cloud Functions và Cloud Storage thường yêu cầu bật billing/Blaze plan.
 ## Cài đặt
 
 ```powershell
-git clone https://github.com/Lethailam/Product-Management-App.git
+git clone https://github.com/CrissNguyenKhanh/Product-Management-App.git
 cd Product-Management-App
 npm install
 npm --prefix functions install
@@ -183,5 +183,5 @@ Các thao tác Auth/Firestore/Storage thực tế chỉ có thể kiểm thử �
 
 ## Liên kết
 
-- GitHub: https://github.com/Lethailam/Product-Management-App
+- GitHub: https://github.com/CrissNguyenKhanh/Product-Management-App
 - Video demo: `[CHƯA CUNG CẤP — bổ sung link sau khi quay]`

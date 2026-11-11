@@ -11,7 +11,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lethailam.usermanagement"
+      "bundleIdentifier": "com.crissnguyenkhanh.usermanagement"
     },
     "android": {
       "adaptiveIcon": {

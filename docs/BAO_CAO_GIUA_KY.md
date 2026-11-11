@@ -3,7 +3,7 @@
 ## USER MANAGEMENT APP — ỨNG DỤNG QUẢN LÝ NGƯỜI DÙNG DÀNH CHO ADMIN
 
 > Môn học: Lập trình đa nền tảng  
-> Repository: https://github.com/Lethailam/Product-Management-App  
+> Repository: https://github.com/CrissNguyenKhanh/Product-Management-App  
 > Video demo: `[CHƯA CUNG CẤP — bổ sung sau khi quay]`  
 > Ảnh minh họa thực tế: `[CHƯA CHỤP — thực hiện theo docs/HUONG_DAN_CHUP_ANH_IPHONE.md]`
 
@@ -195,7 +195,7 @@ Audit của app client hiện báo cảnh báo trong cây Expo Fingerprint và g
 
 ## 20. Link GitHub và video demo
 
-- GitHub: https://github.com/Lethailam/Product-Management-App
+- GitHub: https://github.com/CrissNguyenKhanh/Product-Management-App
 - Video demo: `[CHƯA CUNG CẤP — bổ sung URL thật sau khi quay]`
 
 ## Phụ lục: tiêu chí nghiệm thu thủ công
