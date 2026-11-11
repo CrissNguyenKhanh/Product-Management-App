@@ -10,8 +10,10 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    "src/config/firebase.ts",
-    "src/utilts/imageUtils.ts"
-, "app/_layout.tsx", "src/navigation/AppNavigator.tsx", "src/screens/ProductFormScreen.js", "src/services/productService.ts"  ]
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "functions",
+    "node_modules"
+  ]
 }
