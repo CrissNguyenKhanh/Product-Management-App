@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "User Management",
+    "slug": "user-management-app",
+    "scheme": "usermanagementapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.crissnguyenkhanh.usermanagement"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ứng dụng cần truy cập thư viện ảnh để chọn ảnh đại diện người dùng."
+        }
+      ],
+      "expo-font",
+      "expo-router",
+      "expo-web-browser",
+      "expo-image",
+      "expo-splash-screen",
+      "expo-status-bar"
+    ]
+  }
+}
