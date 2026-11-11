@@ -46,6 +46,10 @@ ui-debug.log
 functions/lib/
 functions/node_modules/
 
+# Local package backup files from earlier dependency work
+package*.before-fix.json
+package*.sdk58-backup.json
+
 # typescript
 *.tsbuildinfo
 
