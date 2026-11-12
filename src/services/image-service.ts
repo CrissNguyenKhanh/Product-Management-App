@@ -1,7 +1,7 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
-import { MAX_IMAGE_DATA_URI_LENGTH } from '@/models/user';
+import { MAX_IMAGE_DATA_URI_LENGTH } from '@/models/lecturer';
 
 const JPEG_PREFIX = 'data:image/jpeg;base64,';
 
@@ -40,10 +40,10 @@ async function createJpegDataUri(uri: string, width: number, compress: number): 
   }
 }
 
-export async function pickAvatar(): Promise<string | null> {
+export async function pickLecturerImage(): Promise<string | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
-    throw new Error('Ứng dụng cần quyền truy cập thư viện ảnh để chọn avatar.');
+    throw new Error('Ứng dụng cần quyền truy cập thư viện để chọn ảnh giảng viên.');
   }
 
   const result = await ImagePicker.launchImageLibraryAsync({

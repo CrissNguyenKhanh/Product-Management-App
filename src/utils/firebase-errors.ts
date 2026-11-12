@@ -10,7 +10,7 @@ const messages: Record<string, string> = {
   unavailable: 'Firestore đang tạm thời không khả dụng. Hãy kiểm tra kết nối mạng.',
   'resource-exhausted': 'Đã vượt quota Firestore miễn phí. Vui lòng thử lại sau.',
   'failed-precondition': 'Firestore chưa được cấu hình đúng hoặc thao tác chưa đáp ứng điều kiện.',
-  'not-found': 'Không tìm thấy hồ sơ người dùng.',
+  'not-found': 'Không tìm thấy giảng viên.',
 };
 
 export function getErrorMessage(error: unknown): string {

@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "User Management",
-    "slug": "user-management-app",
+    "name": "QL Học Phần",
+    "slug": "ql-hoc-phan",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "usermanagement",
+    "scheme": "qlhocphan",
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon",
       "supportsTablet": true,
-      "bundleIdentifier": "com.crissnguyenkhanh.usermanagement"
+      "bundleIdentifier": "com.crissnguyenkhanh.qlhocphan"
     },
     "android": {
-      "package": "com.crissnguyenkhanh.usermanagement",
+      "package": "com.crissnguyenkhanh.qlhocphan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -31,7 +31,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Cho phép User Management truy cập thư viện để chọn ảnh đại diện.",
+          "photosPermission": "Cho phép QL Học Phần truy cập thư viện để chọn ảnh giảng viên.",
           "microphonePermission": false
         }
       ],

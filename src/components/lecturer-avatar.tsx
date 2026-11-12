@@ -3,20 +3,26 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
 
-export function UserAvatar({
+export function LecturerAvatar({
   uri,
-  username,
+  fullname,
   size = 58,
 }: {
   uri: string;
-  username: string;
+  fullname: string;
   size?: number;
 }) {
-  const initial = username.trim().charAt(0).toUpperCase();
+  const initial = fullname.trim().charAt(0).toUpperCase();
   const shape = { width: size, height: size, borderRadius: size / 2 };
 
   if (uri) {
-    return <Image accessibilityLabel={`Avatar của ${username}`} source={{ uri }} style={[styles.image, shape]} />;
+    return (
+      <Image
+        accessibilityLabel={`Ảnh giảng viên ${fullname}`}
+        source={{ uri }}
+        style={[styles.image, shape]}
+      />
+    );
   }
 
   return (
@@ -24,7 +30,7 @@ export function UserAvatar({
       {initial ? (
         <Text style={[styles.initial, { fontSize: size * 0.4 }]}>{initial}</Text>
       ) : (
-        <Ionicons color={colors.primary} name="person-outline" size={size * 0.48} />
+        <Ionicons color={colors.primary} name="school-outline" size={size * 0.48} />
       )}
     </View>
   );

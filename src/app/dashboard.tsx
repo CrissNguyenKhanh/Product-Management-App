@@ -6,7 +6,7 @@ import { AdminGate } from '@/components/admin-gate';
 import { AppScreen } from '@/components/app-screen';
 import { PrimaryButton } from '@/components/primary-button';
 import { useAuth } from '@/contexts/auth-context';
-import { useUsers } from '@/hooks/use-users';
+import { useLecturers } from '@/hooks/use-lecturers';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { getErrorMessage } from '@/utils/firebase-errors';
 
@@ -34,7 +34,8 @@ function MenuCard({ icon, title, description, onPress }: MenuCardProps) {
 
 export default function DashboardScreen() {
   const { user, logout } = useAuth();
-  const { users, loading, error } = useUsers();
+  const { lecturers, loading, error } = useLecturers();
+  const totalClasses = lecturers.reduce((sum, lecturer) => sum + lecturer.SumClass, 0);
 
   function confirmLogout() {
     Alert.alert('Đăng xuất?', 'Bạn sẽ cần đăng nhập lại để tiếp tục quản trị.', [
@@ -65,12 +66,14 @@ export default function DashboardScreen() {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.hero}>
             <View>
-              <Text style={styles.eyebrow}>TỔNG HỒ SƠ DEMO</Text>
-              <Text style={styles.total}>{loading ? '—' : users.length}</Text>
-              <Text style={styles.totalHint}>Document được quản lý trên Cloud Firestore</Text>
+              <Text style={styles.eyebrow}>TỔNG GIẢNG VIÊN</Text>
+              <Text style={styles.total}>{loading ? '—' : lecturers.length}</Text>
+              <Text style={styles.totalHint}>
+                {loading ? 'Đang đồng bộ Cloud Firestore' : `Đang phụ trách tổng cộng ${totalClasses} lớp`}
+              </Text>
             </View>
             <View style={styles.heroIcon}>
-              <Ionicons color="#FFFFFF" name="people" size={34} />
+              <Ionicons color="#FFFFFF" name="school" size={34} />
             </View>
           </View>
 
@@ -83,16 +86,16 @@ export default function DashboardScreen() {
 
           <Text style={styles.sectionTitle}>Quản trị nhanh</Text>
           <MenuCard
-            description="Tìm kiếm, xem, sửa hoặc xóa hồ sơ Firestore"
-            icon="people-outline"
-            onPress={() => router.push('/users')}
-            title="Quản lý người dùng"
+            description="Tìm kiếm, xem, sửa hoặc xóa giảng viên"
+            icon="school-outline"
+            onPress={() => router.push('/lecturers')}
+            title="Quản lý giảng viên"
           />
           <MenuCard
-            description="Tạo hồ sơ demo và chọn ảnh đại diện JPEG"
+            description="Nhập IDGV, Fullname, Image và SumClass"
             icon="person-add-outline"
-            onPress={() => router.push('/user-form')}
-            title="Thêm hồ sơ demo"
+            onPress={() => router.push('/lecturer-form')}
+            title="Thêm giảng viên"
           />
         </ScrollView>
       </AppScreen>

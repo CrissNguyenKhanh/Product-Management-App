@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { ManagedUser } from '@/models/user';
-import { fetchUsers, subscribeToUsers } from '@/services/user-service';
+import { Lecturer } from '@/models/lecturer';
+import { fetchLecturers, subscribeToLecturers } from '@/services/lecturer-service';
 import { getErrorMessage } from '@/utils/firebase-errors';
 
-export function useUsers() {
-  const [users, setUsers] = useState<ManagedUser[]>([]);
+export function useLecturers() {
+  const [lecturers, setLecturers] = useState<Lecturer[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const unsubscribe = subscribeToUsers(
-      (nextUsers) => {
-        setUsers(nextUsers);
+    return subscribeToLecturers(
+      (nextLecturers) => {
+        setLecturers(nextLecturers);
         setError('');
         setLoading(false);
       },
@@ -22,14 +22,12 @@ export function useUsers() {
         setLoading(false);
       },
     );
-
-    return unsubscribe;
   }, []);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      setUsers(await fetchUsers());
+      setLecturers(await fetchLecturers());
       setError('');
     } catch (nextError) {
       setError(getErrorMessage(nextError));
@@ -38,5 +36,5 @@ export function useUsers() {
     }
   }, []);
 
-  return { users, loading, refreshing, error, refresh };
+  return { lecturers, loading, refreshing, error, refresh };
 }

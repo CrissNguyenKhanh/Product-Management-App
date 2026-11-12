@@ -15,37 +15,33 @@ import {
 import { AdminGate } from '@/components/admin-gate';
 import { AppScreen } from '@/components/app-screen';
 import { IconButton } from '@/components/icon-button';
+import { LecturerAvatar } from '@/components/lecturer-avatar';
 import { LoadingView } from '@/components/loading-view';
 import { PrimaryButton } from '@/components/primary-button';
 import { StateView } from '@/components/state-view';
-import { UserAvatar } from '@/components/user-avatar';
-import { useUsers } from '@/hooks/use-users';
-import { ManagedUser, PASSWORD_PLACEHOLDER } from '@/models/user';
-import { deleteManagedUser } from '@/services/user-service';
+import { useLecturers } from '@/hooks/use-lecturers';
+import { Lecturer } from '@/models/lecturer';
+import { deleteLecturer } from '@/services/lecturer-service';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { getErrorMessage } from '@/utils/firebase-errors';
 
-function UserCard({
-  user,
+function LecturerCard({
+  lecturer,
   deleting,
   onDelete,
 }: {
-  user: ManagedUser;
+  lecturer: Lecturer;
   deleting: boolean;
   onDelete: () => void;
 }) {
   return (
     <View style={styles.card}>
-      <View style={styles.userRow}>
-        <UserAvatar size={56} uri={user.image} username={user.username} />
-        <View style={styles.userInfo}>
-          <Text numberOfLines={1} style={styles.username}>
-            {user.username}
-          </Text>
-          <Text numberOfLines={1} style={styles.email}>
-            {user.email}
-          </Text>
-          <Text style={styles.password}>Password demo: {PASSWORD_PLACEHOLDER}</Text>
+      <View style={styles.lecturerRow}>
+        <LecturerAvatar fullname={lecturer.Fullname} size={58} uri={lecturer.Image} />
+        <View style={styles.lecturerInfo}>
+          <Text numberOfLines={1} style={styles.fullname}>{lecturer.Fullname}</Text>
+          <Text numberOfLines={1} style={styles.lecturerId}>Mã giảng viên: {lecturer.IDGV}</Text>
+          <Text style={styles.sumClass}>Tổng số lớp: {lecturer.SumClass}</Text>
         </View>
       </View>
       <View style={styles.actions}>
@@ -53,20 +49,20 @@ function UserCard({
           backgroundColor={colors.primarySoft}
           color={colors.primary}
           icon="eye-outline"
-          label={`Xem ${user.username}`}
-          onPress={() => router.push({ pathname: '/user-detail', params: { uid: user.id } })}
+          label={`Xem ${lecturer.Fullname}`}
+          onPress={() => router.push({ pathname: '/lecturer-detail', params: { id: lecturer.id } })}
         />
         <IconButton
           icon="create-outline"
-          label={`Sửa ${user.username}`}
-          onPress={() => router.push({ pathname: '/user-form', params: { uid: user.id } })}
+          label={`Sửa ${lecturer.Fullname}`}
+          onPress={() => router.push({ pathname: '/lecturer-form', params: { id: lecturer.id } })}
         />
         <IconButton
           backgroundColor={colors.dangerSoft}
           color={colors.danger}
           disabled={deleting}
           icon="trash-outline"
-          label={`Xóa ${user.username}`}
+          label={`Xóa ${lecturer.Fullname}`}
           onPress={onDelete}
         />
         {deleting ? <ActivityIndicator color={colors.danger} size="small" /> : null}
@@ -75,48 +71,59 @@ function UserCard({
   );
 }
 
-export default function UsersScreen() {
-  const { users, loading, refreshing, error, refresh } = useUsers();
-  const [query, setQuery] = useState('');
+export default function LecturersScreen() {
+  const { lecturers, loading, refreshing, error, refresh } = useLecturers();
+  const [search, setSearch] = useState('');
   const [deletingId, setDeletingId] = useState('');
 
-  const filteredUsers = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase('vi');
-    if (!normalized) return users;
-    return users.filter(
-      (user) =>
-        user.username.toLocaleLowerCase('vi').includes(normalized) ||
-        user.email.toLocaleLowerCase('vi').includes(normalized),
+  const filteredLecturers = useMemo(() => {
+    const normalized = search.trim().toLocaleLowerCase('vi');
+    if (!normalized) return lecturers;
+    return lecturers.filter(
+      (lecturer) =>
+        lecturer.IDGV.toLocaleLowerCase('vi').includes(normalized) ||
+        lecturer.Fullname.toLocaleLowerCase('vi').includes(normalized),
     );
-  }, [query, users]);
+  }, [lecturers, search]);
 
-  function confirmDelete(user: ManagedUser) {
-    Alert.alert('Xóa hồ sơ?', `${user.username} chỉ bị xóa khỏi collection users trong Firestore.`, [
-      { text: 'Hủy', style: 'cancel' },
-      {
-        text: 'Xóa',
-        style: 'destructive',
-        onPress: async () => {
-          setDeletingId(user.id);
-          try {
-            await deleteManagedUser(user.id);
-            Alert.alert('Đã xóa', 'Hồ sơ demo đã được xóa khỏi Firestore.');
-          } catch (nextError) {
-            Alert.alert('Không thể xóa', getErrorMessage(nextError));
-          } finally {
-            setDeletingId('');
-          }
+  function confirmDelete(lecturer: Lecturer) {
+    Alert.alert(
+      'Xóa giảng viên?',
+      `${lecturer.IDGV} — ${lecturer.Fullname} sẽ bị xóa khỏi collection GiangVien.`,
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingId(lecturer.id);
+            try {
+              await deleteLecturer(lecturer.id);
+              Alert.alert('Đã xóa', 'Giảng viên đã được xóa khỏi Firestore.');
+            } catch (nextError) {
+              Alert.alert('Không thể xóa', getErrorMessage(nextError));
+            } finally {
+              setDeletingId('');
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   }
 
   return (
     <AdminGate>
       <AppScreen
-        right={<PrimaryButton compact icon="person-add-outline" label="Thêm" onPress={() => router.push('/user-form')} />}
-        subtitle={`${users.length} hồ sơ demo`}
-        title="Danh sách người dùng">
+        right={
+          <PrimaryButton
+            compact
+            icon="person-add-outline"
+            label="Thêm"
+            onPress={() => router.push('/lecturer-form')}
+          />
+        }
+        subtitle={`${lecturers.length} giảng viên trong collection GiangVien`}
+        title="Danh sách giảng viên">
         <View style={styles.toolbar}>
           <IconButton icon="arrow-back" label="Quay lại Dashboard" onPress={() => router.back()} />
           <View style={styles.searchBox}>
@@ -124,18 +131,18 @@ export default function UsersScreen() {
             <TextInput
               autoCapitalize="none"
               autoCorrect={false}
-              onChangeText={setQuery}
-              placeholder="Tìm username hoặc email"
+              onChangeText={setSearch}
+              placeholder="Tìm IDGV hoặc họ tên"
               placeholderTextColor="#98A2B3"
               style={styles.searchInput}
-              value={query}
+              value={search}
             />
-            {query ? (
+            {search ? (
               <IconButton
                 backgroundColor="transparent"
                 icon="close-circle"
                 label="Xóa tìm kiếm"
-                onPress={() => setQuery('')}
+                onPress={() => setSearch('')}
                 style={styles.clearButton}
               />
             ) : null}
@@ -143,11 +150,11 @@ export default function UsersScreen() {
         </View>
 
         {loading ? (
-          <LoadingView label="Đang tải hồ sơ từ Firestore..." />
+          <LoadingView label="Đang tải giảng viên từ Firestore..." />
         ) : (
           <FlatList
             contentContainerStyle={styles.listContent}
-            data={filteredUsers}
+            data={filteredLecturers}
             keyExtractor={(item) => item.id}
             ListEmptyComponent={
               error ? (
@@ -158,29 +165,34 @@ export default function UsersScreen() {
                   onAction={refresh}
                   title="Không thể tải dữ liệu"
                 />
-              ) : query ? (
+              ) : search ? (
                 <StateView
                   icon="search-outline"
-                  message="Hãy thử một username hoặc email khác."
+                  message="Hãy thử một mã giảng viên hoặc họ tên khác."
                   title="Không tìm thấy kết quả"
                 />
               ) : (
                 <StateView
-                  actionLabel="Thêm người dùng"
-                  message="Tạo hồ sơ demo đầu tiên để bắt đầu quản lý."
-                  onAction={() => router.push('/user-form')}
+                  actionLabel="Thêm giảng viên"
+                  message="Thêm giảng viên đầu tiên vào collection GiangVien."
+                  onAction={() => router.push('/lecturer-form')}
                   title="Danh sách đang trống"
                 />
               )
             }
             refreshControl={
-              <RefreshControl colors={[colors.primary]} onRefresh={refresh} refreshing={refreshing} tintColor={colors.primary} />
+              <RefreshControl
+                colors={[colors.primary]}
+                onRefresh={refresh}
+                refreshing={refreshing}
+                tintColor={colors.primary}
+              />
             }
             renderItem={({ item }) => (
-              <UserCard
+              <LecturerCard
                 deleting={deletingId === item.id}
+                lecturer={item}
                 onDelete={() => confirmDelete(item)}
-                user={item}
               />
             )}
           />
@@ -221,11 +233,11 @@ const styles = StyleSheet.create({
     padding: spacing.medium,
     gap: spacing.medium,
   },
-  userRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.medium },
-  userInfo: { flex: 1, gap: 3 },
-  username: { color: colors.text, fontSize: 17, fontWeight: '800' },
-  email: { color: colors.textMuted, fontSize: 14 },
-  password: { color: colors.textMuted, fontSize: 12 },
+  lecturerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.medium },
+  lecturerInfo: { flex: 1, gap: 3 },
+  fullname: { color: colors.text, fontSize: 17, fontWeight: '800' },
+  lecturerId: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+  sumClass: { color: colors.textMuted, fontSize: 13 },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

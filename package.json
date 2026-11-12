@@ -1,5 +1,5 @@
 {
-  "name": "user-management-app",
+  "name": "ql-hoc-phan-app",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {

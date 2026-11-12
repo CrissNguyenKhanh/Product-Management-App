@@ -1,184 +1,184 @@
 # BÁO CÁO GIỮA KỲ
 
-## USER MANAGEMENT APP — QUẢN LÝ HỒ SƠ NGƯỜI DÙNG TRÊN FIREBASE SPARK
+## ỨNG DỤNG QUẢN LÝ GIẢNG VIÊN — QL HỌC PHẦN
 
 > Môn học: Lập trình đa nền tảng
+>
+> Công nghệ: React Native, Expo SDK 58, TypeScript, Firebase
 >
 > Repository: https://github.com/CrissNguyenKhanh/Product-Management-App
 >
 > Nhánh: `original-rebuild`
->
-> Video demo: `[CHƯA CUNG CẤP — bổ sung sau khi quay]`
 
-## 1. Giới thiệu
+## 1. Yêu cầu đề tài
 
-User Management App là ứng dụng React Native cho phép Admin quản lý các hồ sơ demo trong Cloud Firestore. Phiên bản hiện tại được thiết kế cho Firebase Spark miễn phí, không dùng Cloud Functions và Firebase Storage.
+Xây dựng ứng dụng trong phân hệ Admin để nhập, hiển thị, sửa và xóa giảng viên trong cơ sở dữ liệu QLHocPhan. Collection `GiangVien` bắt buộc có đúng các trường:
 
-Điểm quan trọng về phạm vi: chỉ tài khoản Admin hiện có đăng nhập bằng Firebase Authentication. Các document trong collection `users` không phải tài khoản Authentication, không thể đăng nhập và không có chức năng tạo/đổi mật khẩu/xóa tài khoản Auth.
+- `IDGV`: mã giảng viên.
+- `Fullname`: họ và tên.
+- `Image`: hình ảnh.
+- `SumClass`: tổng số lớp.
 
-## 2. Mục tiêu
+Ứng dụng phải chạy được trên Web; phần chọn và hiển thị ảnh được trình diễn trên mobile.
 
-- Đăng nhập Admin và kiểm tra custom claim `admin: true`.
-- Thêm, hiển thị thời gian thực, tìm kiếm, xem, sửa và xóa hồ sơ.
-- Chọn ảnh từ iPhone, nén JPEG và lưu lâu dài mà không cần Storage.
-- Không thu thập hoặc lưu mật khẩu thật.
-- Bảo vệ toàn bộ dữ liệu bằng Firestore Security Rules.
-- Tương thích Expo SDK 58 và Expo Go.
+## 2. Công nghệ
 
-## 3. Công nghệ
+- React 19.3, React Native 0.88 và TypeScript 6.
+- Expo SDK 58 và Expo Router.
+- Firebase Authentication cho tài khoản Admin.
+- Cloud Firestore cho dữ liệu collection `GiangVien`.
+- Expo Image Picker và Expo Image Manipulator cho ảnh mobile.
+- ESLint, TypeScript compiler và Expo tooling để kiểm tra source.
 
-- React Native 0.88, React 19.3 và TypeScript 6.
-- Expo SDK 58, Expo Router, Expo Image Picker, Expo Image Manipulator.
-- Firebase Authentication cho phiên Admin.
-- Cloud Firestore Client SDK cho CRUD và listener thời gian thực.
-- ESLint và Expo tooling.
-
-## 4. Kiến trúc
+## 3. Kiến trúc
 
 ```text
-iPhone / Expo Go
+Web / iPhone Expo Go
        │
        ├── Firebase Authentication
-       │      └── đăng nhập Admin hiện có + custom claim
+       │      └── đăng nhập Admin + custom claim
        │
        └── Cloud Firestore Client SDK
-              └── users/{documentId}
-                    ├── username
-                    ├── email
-                    ├── password = [demo-no-login]
-                    └── image = JPEG data URI hoặc ""
+              └── GiangVien/{documentId}
+                    ├── IDGV: string
+                    ├── Fullname: string
+                    ├── Image: string
+                    └── SumClass: integer
 ```
 
-Không có backend Functions, Admin SDK hay Storage trong ứng dụng. Quyền truy cập được kiểm tra ở cả giao diện (`AdminGate`) và Firestore Rules; client không thể tự cấp quyền Admin.
+Không sử dụng Cloud Functions hoặc Firebase Storage. Hình ảnh nhỏ được lưu dưới dạng JPEG data URI trong trường `Image`, phù hợp gói Firebase Spark và yêu cầu bài thi.
 
-## 5. Cấu trúc source
+## 4. Cấu trúc source
 
 | Vị trí | Vai trò |
 |---|---|
-| `src/app` | Login, Dashboard, danh sách, form và chi tiết |
-| `src/components` | Thành phần giao diện dùng lại |
-| `src/config/firebase.*` | Khởi tạo duy nhất Auth và Firestore |
-| `src/contexts/auth-context.tsx` | Theo dõi phiên và kiểm tra custom claim |
-| `src/services/user-service.ts` | Firestore Client CRUD và listener |
-| `src/services/image-service.ts` | Chọn, resize, nén và tạo JPEG data URI |
-| `src/models/user.ts` | Kiểu dữ liệu, placeholder và giới hạn ảnh |
-| `firestore.rules` | Phân quyền Admin và kiểm tra schema |
+| `src/app/dashboard.tsx` | Thống kê giảng viên và tổng số lớp |
+| `src/app/lecturers.tsx` | Danh sách, tìm kiếm và xóa |
+| `src/app/lecturer-form.tsx` | Form thêm/sửa bốn trường |
+| `src/app/lecturer-detail.tsx` | Hiển thị chi tiết giảng viên |
+| `src/models/lecturer.ts` | Kiểu dữ liệu đúng schema đề |
+| `src/services/lecturer-service.ts` | Firestore CRUD, realtime và chống trùng IDGV |
+| `src/services/image-service.ts` | Chọn, resize, nén ảnh JPEG |
+| `src/hooks/use-lecturers.ts` | Listener và trạng thái danh sách |
+| `firestore.rules` | Bảo mật Admin và kiểm tra schema |
 
-## 6. Cấu trúc dữ liệu
+## 5. Cấu trúc dữ liệu
 
-Collection nghiệp vụ duy nhất là `users`. Firestore tự tạo document ID làm định danh kỹ thuật. Document có đúng bốn trường:
+Collection: `GiangVien`.
 
 ```json
 {
-  "username": "nguyenvana",
-  "email": "user@example.com",
-  "password": "[demo-no-login]",
-  "image": "data:image/jpeg;base64,..."
+  "IDGV": "GV001",
+  "Fullname": "Nguyễn Văn An",
+  "Image": "data:image/jpeg;base64,...",
+  "SumClass": 5
 }
 ```
 
-Không có `id`, `uid`, `role`, `createdAt` hoặc trường nghiệp vụ nào khác bên trong document.
+Document ID do Firestore tự sinh, không được thêm vào dữ liệu. Source và Security Rules đều chỉ cho phép đúng bốn trường của đề.
 
-## 7. Password demo
+## 6. Đăng nhập Admin
 
-Form hiển thị trường khóa `[demo-no-login]` để đáp ứng mô hình bốn trường nhưng không nhận dữ liệu nhạy cảm. Service luôn tự ghi đúng chuỗi đại diện này, và Rules từ chối giá trị khác. Đây không phải password hash và không liên quan đến mật khẩu Admin.
+Admin đăng nhập bằng Email/Password của Firebase Authentication. App lấy ID token và kiểm tra custom claim `admin: true`; `AdminGate` bảo vệ các route quản trị. Firestore Rules kiểm tra lại claim ở phía server nên client không thể tự cấp quyền.
 
-## 8. Đăng nhập Admin
+## 7. Thêm giảng viên
 
-Màn hình Login dùng `signInWithEmailAndPassword` cho tài khoản Admin hiện có. Sau đăng nhập, app lấy ID token và chỉ tiếp tục nếu `claims.admin === true`; tài khoản không có claim bị đăng xuất. CRUD hồ sơ không gọi bất kỳ API quản trị Authentication nào nên không tạo, đổi hoặc xóa tài khoản Auth.
+Form nhận:
 
-## 9. CRUD Firestore Client
+- Mã giảng viên `IDGV`, tự chuẩn hóa chữ hoa.
+- Họ tên `Fullname`.
+- Ảnh `Image`, có thể để trống.
+- Tổng số lớp `SumClass`, số nguyên không âm.
 
-- Thêm: `addDoc(collection(db, 'users'), data)`.
-- Danh sách: `onSnapshot` để cập nhật thời gian thực; `getDocs` cho pull-to-refresh.
-- Chi tiết: `getDoc` theo document ID.
-- Sửa: `updateDoc` và luôn ghi lại đủ bốn trường hợp lệ.
-- Xóa: `deleteDoc` chỉ xóa document Firestore.
+Service truy vấn để chặn `IDGV` trùng trước khi dùng `addDoc`. Nút submit có loading và lỗi được hiển thị bằng Alert.
 
-Dashboard đếm số document từ listener. Tìm kiếm username/email thực hiện cục bộ trên danh sách đã tải.
+## 8. Hiển thị và tìm kiếm
 
-## 10. Ảnh đại diện không dùng Storage
+Danh sách dùng `onSnapshot` để cập nhật thời gian thực. Mỗi thẻ hiển thị ảnh, họ tên, mã giảng viên và tổng số lớp. Tìm kiếm cục bộ theo `IDGV` hoặc `Fullname`, không phân biệt hoa thường. Pull-to-refresh dùng `getDocs`.
 
-Expo Image Picker xin quyền thư viện và crop ảnh tỉ lệ 1:1. Expo Image Manipulator resize và nén ảnh thành JPEG qua nhiều mức từ 512 px xuống 192 px. Kết quả được ghép prefix `data:image/jpeg;base64,` và chỉ chấp nhận khi không quá 180.000 ký tự.
+## 9. Sửa và xóa
 
-Data URI được lưu trong trường `image`, vì vậy ảnh vẫn hiển thị sau khi đóng/mở ứng dụng. Nếu mọi mức nén vẫn vượt giới hạn, app báo lỗi và yêu cầu chọn ảnh khác. Chuỗi rỗng biểu thị không có ảnh.
+Màn hình sửa đọc document bằng `getDoc` và ghi bằng `updateDoc`. Khi đổi mã, service tiếp tục kiểm tra trùng `IDGV`. Xóa dùng `deleteDoc` sau hộp thoại xác nhận Cancel/Delete.
 
-## 11. Firestore Security Rules
+## 10. Hình ảnh trên mobile
 
-Rules áp dụng các điều kiện:
+Expo Image Picker xin quyền thư viện và cho crop ảnh 1:1. Expo Image Manipulator thử nhiều mức resize/nén JPEG từ 512 px xuống 192 px. Kết quả được lưu dưới dạng `data:image/jpeg;base64,...`, tối đa 180.000 ký tự.
 
-- Mọi read/create/update/delete trong `users` cần `request.auth.token.admin == true`.
-- Create/update phải có đúng `username`, `email`, `password`, `image`.
-- Kiểm tra kiểu string và giới hạn username, email, image.
-- `password` bắt buộc bằng `[demo-no-login]`.
-- `image` phải rỗng hoặc là JPEG data URI base64, tối đa 180.000 ký tự.
-- Mọi collection/path khác bị từ chối mặc định.
+Do ảnh nằm trực tiếp trong Firestore nên vẫn hiển thị sau khi đóng/mở app. Nếu ảnh vượt giới hạn sau mọi mức nén, app thông báo chọn ảnh khác.
 
-## 12. Firebase Spark và giới hạn miễn phí
+## 11. Chức năng nâng cao
 
-Phiên bản này không cần Blaze. Firestore cung cấp một database miễn phí cho mỗi project với quota: 1 GiB dữ liệu, 50.000 document reads/ngày, 20.000 writes/ngày, 20.000 deletes/ngày và 10 GiB outbound/tháng. Quota hằng ngày được reset khoảng nửa đêm theo giờ Thái Bình Dương.
+- Dashboard tổng số giảng viên và tổng `SumClass`.
+- Realtime listener.
+- Tìm kiếm theo mã/họ tên.
+- Kiểm tra trùng mã giảng viên.
+- Pull-to-refresh, loading, empty state và error state.
+- Validation đồng bộ giữa form, service và Firestore Rules.
+- Giao diện responsive dùng được trên Web và mobile.
 
-Khi dùng Spark, vượt quota sẽ làm thao tác bị giới hạn; muốn tăng quota phải bật billing. Các tính năng như TTL deletes, point-in-time recovery, backup, restore và clone không thuộc free usage và không được dùng trong dự án.
+## 12. Firestore Security Rules
 
-Ảnh base64 làm document lớn hơn và được tải lại khi đọc hồ sơ, nên tiêu tốn data transfer/reads nhanh hơn URL ảnh. Giải pháp phù hợp bài tập và ảnh avatar nhỏ, không phù hợp thư viện ảnh lớn.
+Rules chỉ cho tài khoản có `request.auth.token.admin == true` đọc, tạo, sửa và xóa `GiangVien`. Create/update phải:
 
-Cloud Storage for Firebase hiện yêu cầu Blaze để sử dụng default bucket, vì vậy dự án loại bỏ hoàn toàn Storage. Cloud Functions cũng không cần thiết vì ứng dụng chỉ CRUD hồ sơ demo, không quản trị tài khoản Auth.
+- Có đúng `IDGV`, `Fullname`, `Image`, `SumClass`.
+- `IDGV` và `Fullname` là string trong giới hạn kích thước.
+- `Image` rỗng hoặc JPEG data URI tối đa 180.000 ký tự.
+- `SumClass` là integer từ 0 đến 10.000.
+- Mọi collection khác bị từ chối mặc định.
 
-## 13. Cấu hình và triển khai
-
-Giữ nguyên tài khoản Admin và custom claim đã có. Cấu hình client nằm trong `.env`; source mẫu ở `.env.example`.
+## 13. Cài đặt và chạy
 
 ```powershell
 npm install
 Copy-Item .env.example .env
-firebase login
-firebase use product-management-app-239fa
-firebase deploy --only firestore:rules,firestore:indexes
+npx firebase-tools deploy --only firestore:rules,firestore:indexes
+npm run web
 ```
 
-Không deploy Functions/Storage, không dùng `--force`, không nâng Expo và không xóa Firebase project/dữ liệu hiện có.
+Chạy mobile:
 
-## 14. Chạy và kiểm tra
+```powershell
+npx expo start --clear
+```
+
+## 14. Kiểm tra source
 
 ```powershell
 npm install
 npx expo install --check
 npx tsc --noEmit
 npm run lint
-npx expo start --clear
 ```
-
-Trên iPhone, mở Expo Go tương thích SDK 58 và quét QR. Có thể dùng `npx expo start --tunnel --clear` nếu mạng LAN chặn kết nối.
-
-## 15. Kết quả và giới hạn kiểm thử
 
 Kết quả kiểm tra source ngày 12/11/2026:
 
 | Kiểm tra | Kết quả |
 |---|---|
-| `npm install` | Đạt, dependency đã đồng bộ |
+| `npm install` | Đạt |
 | `npx expo install --check` | Dependencies are up to date |
-| `npx tsc --noEmit` | Đạt, không có lỗi TypeScript |
-| `npm run lint` | Đạt, không có lỗi ESLint |
-| `npx expo export --platform web` | Đạt, bundle và 8 static routes thành công |
+| `npx tsc --noEmit` | Đạt, không lỗi TypeScript |
+| `npm run lint` | Đạt, không lỗi ESLint |
+| `npx expo start --clear` | Metro khởi động và tạo QR thành công |
+| `npx expo export --platform web` | Bundle thành công 8 static routes |
 
-Kiểm thử production cuối cùng vẫn cần rules đã deploy, tài khoản Admin thật và iPhone kết nối. Báo cáo không coi các ca end-to-end Firebase/iPhone là đã đạt khi chưa thực hiện thủ công.
+Kiểm thử end-to-end vẫn cần rules mới được deploy, Admin thật và trình duyệt/iPhone kết nối.
 
-Ứng dụng không tuyên bố đã triển khai Firebase Authentication CRUD. Chức năng Auth duy nhất là đăng nhập/đăng xuất Admin hiện có.
+## 15. Dữ liệu nộp kèm
 
-## 16. Kịch bản nghiệm thu
+- Source GitHub trên nhánh `original-rebuild`.
+- File JSON mẫu: `docs/GiangVien.sample.json`.
+- Ảnh minh họa: thực hiện theo `docs/HUONG_DAN_CHUP_ANH_IPHONE.md`.
+- Link video demo: `[BỔ SUNG SAU KHI QUAY]`.
 
-- [ ] Admin đăng nhập đúng; tài khoản không có claim bị chặn.
-- [ ] Dashboard hiển thị tổng hồ sơ.
-- [ ] Thêm hồ sơ với đúng bốn trường và password placeholder.
-- [ ] Chọn ảnh, lưu và mở lại app vẫn hiển thị ảnh.
-- [ ] Ảnh quá giới hạn có thông báo chọn lại.
-- [ ] Tìm kiếm, xem chi tiết và sửa hồ sơ.
-- [ ] Hủy xóa và xác nhận xóa chỉ document Firestore.
-- [ ] Đăng xuất không ảnh hưởng tài khoản Admin.
-- [ ] Rules từ chối người không phải Admin và collection khác.
+## 16. Checklist nghiệm thu
 
-## 17. Liên kết
-
-- GitHub: https://github.com/CrissNguyenKhanh/Product-Management-App/tree/original-rebuild
-- Video demo: `[CHƯA CUNG CẤP — bổ sung URL thật sau khi quay]`
+- [ ] Đăng nhập Admin thành công.
+- [ ] Web hiển thị Dashboard và danh sách.
+- [ ] Thêm document đủ đúng bốn trường.
+- [ ] Chặn IDGV trùng.
+- [ ] Tìm kiếm theo IDGV/Fullname.
+- [ ] Xem và sửa giảng viên.
+- [ ] Hủy xóa và xác nhận xóa.
+- [ ] Chọn ảnh trên iPhone và ảnh hiển thị sau khi mở lại app.
+- [ ] Chụp Firestore collection `GiangVien`.
+- [ ] Quay video demo và bổ sung link.

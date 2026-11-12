@@ -21,9 +21,9 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="login" options={{ animation: 'fade' }} />
             <Stack.Screen name="dashboard" options={{ gestureEnabled: false }} />
-            <Stack.Screen name="users" />
-            <Stack.Screen name="user-form" />
-            <Stack.Screen name="user-detail" />
+            <Stack.Screen name="lecturers" />
+            <Stack.Screen name="lecturer-form" />
+            <Stack.Screen name="lecturer-detail" />
           </Stack>
         </AuthProvider>
       </SafeAreaProvider>

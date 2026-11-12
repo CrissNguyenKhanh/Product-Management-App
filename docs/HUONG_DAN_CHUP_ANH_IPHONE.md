@@ -1,45 +1,30 @@
-# Hướng dẫn chụp ảnh minh họa trên iPhone
-
-Chỉ bổ sung ảnh thật sau khi app đã kết nối Firebase và chạy bằng Expo Go. Không dùng ảnh mock để mô tả kết quả kiểm thử.
+# Hướng dẫn chụp ảnh minh họa
 
 ## Chuẩn bị
 
-1. Deploy Firestore Rules và indexes; không cần Functions hoặc Storage.
-2. Xác nhận tài khoản Admin hiện có đã có custom claim `admin: true`.
-3. Chạy `npx expo start --clear` trên máy tính.
-4. Mở project bằng Expo Go tương thích SDK 58 trên iPhone.
-5. Dùng email hồ sơ demo, không nhập mật khẩu thật vào dữ liệu bài thi.
+1. Deploy `firestore.rules` và `firestore.indexes.json`.
+2. Xác nhận Admin có custom claim `admin: true`.
+3. Chạy Web bằng `npm run web` và mobile bằng `npx expo start --clear`.
+4. Dùng dữ liệu giảng viên demo, không đưa thông tin nhạy cảm vào báo cáo.
 
-## Danh sách ảnh cần chụp
+## Danh sách ảnh nên chụp
 
-1. `01-login.png`: màn hình Login Admin trước khi nhập.
-2. `02-login-error.png`: email/mật khẩu Admin sai và thông báo lỗi.
-3. `03-dashboard.png`: Dashboard có email Admin và tổng hồ sơ.
-4. `04-user-list-empty.png`: empty state nếu collection trống.
-5. `05-add-user.png`: form username, email, password demo và image.
-6. `06-image-picker.png`: giao diện chọn ảnh iOS.
-7. `07-user-list.png`: danh sách sau khi thêm hồ sơ.
-8. `08-search.png`: kết quả tìm kiếm username/email.
-9. `09-user-detail.png`: avatar và bốn trường demo.
-10. `10-edit-user.png`: form sửa hồ sơ, không có đổi mật khẩu Auth.
-11. `11-delete-confirm.png`: hộp thoại nói rõ chỉ xóa document Firestore.
-12. `12-reopen-image.png`: ảnh vẫn hiển thị sau khi đóng/mở app.
-13. `13-logout.png`: quay về Login sau đăng xuất.
+1. `01-login-web.png`: màn hình đăng nhập Admin trên Web.
+2. `02-dashboard-web.png`: tổng giảng viên và tổng số lớp.
+3. `03-list-web.png`: danh sách giảng viên.
+4. `04-add-web.png`: form đủ IDGV, Fullname, Image, SumClass.
+5. `05-search-web.png`: kết quả tìm theo IDGV hoặc họ tên.
+6. `06-detail-web.png`: chi tiết đủ bốn trường.
+7. `07-edit-web.png`: sửa giảng viên.
+8. `08-delete-confirm.png`: hộp thoại xác nhận xóa.
+9. `09-firestore-console.png`: collection `GiangVien` và document đúng bốn trường.
+10. `10-image-picker-iphone.png`: giao diện chọn ảnh iOS.
+11. `11-image-iphone.png`: ảnh giảng viên hiển thị trong app mobile.
 
-## Cách chụp
+## Lưu ý
 
-- iPhone Face ID: bấm đồng thời nút sườn và nút tăng âm lượng.
-- Không cắt mất Dynamic Island, tiêu đề hoặc thanh điều hướng.
-- Che email Admin thật trước khi đưa vào báo cáo.
-- Không chụp mật khẩu Admin đang hiển thị rõ.
-- Dùng cùng một bộ dữ liệu demo để ảnh có trình tự dễ hiểu.
-
-## Đưa ảnh vào báo cáo
-
-Tạo `docs/images/`, đặt tên đúng danh sách trên và chèn bằng Markdown, ví dụ:
-
-```markdown
-![Dashboard trên iPhone](images/03-dashboard.png)
-```
-
-Sau khi quay video, thay placeholder trong README và báo cáo bằng URL thật.
+- Không cắt mất tiêu đề, thanh điều hướng hoặc tên trường.
+- Firestore Console phải nhìn rõ đúng `IDGV`, `Fullname`, `Image`, `SumClass`.
+- Chỉ chụp collection `GiangVien` của đề hiện tại.
+- Che email Admin thật nếu cần.
+- Dùng cùng một bộ dữ liệu demo cho ảnh và video.

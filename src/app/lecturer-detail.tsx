@@ -6,12 +6,12 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AdminGate } from '@/components/admin-gate';
 import { AppScreen } from '@/components/app-screen';
 import { IconButton } from '@/components/icon-button';
+import { LecturerAvatar } from '@/components/lecturer-avatar';
 import { LoadingView } from '@/components/loading-view';
 import { PrimaryButton } from '@/components/primary-button';
 import { StateView } from '@/components/state-view';
-import { UserAvatar } from '@/components/user-avatar';
-import { ManagedUser, PASSWORD_PLACEHOLDER } from '@/models/user';
-import { deleteManagedUser, fetchUser } from '@/services/user-service';
+import { Lecturer } from '@/models/lecturer';
+import { deleteLecturer, fetchLecturer } from '@/services/lecturer-service';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { getErrorMessage } from '@/utils/firebase-errors';
 
@@ -35,52 +35,45 @@ function DetailRow({
       </View>
       <View style={styles.detailText}>
         <Text style={styles.detailLabel}>{label}</Text>
-        <Text selectable style={styles.detailValue}>
-          {value}
-        </Text>
+        <Text selectable style={styles.detailValue}>{value}</Text>
       </View>
     </View>
   );
 }
 
-export default function UserDetailScreen() {
-  const params = useLocalSearchParams<{ uid?: string | string[] }>();
-  const uid = firstParam(params.uid);
-  const [user, setUser] = useState<ManagedUser | null>(null);
+export default function LecturerDetailScreen() {
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const documentId = firstParam(params.id);
+  const [lecturer, setLecturer] = useState<Lecturer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  const loadUser = useCallback(async () => {
-    if (!uid) {
-      setError('Thiếu mã định danh hồ sơ.');
+  const loadLecturer = useCallback(async () => {
+    if (!documentId) {
+      setError('Thiếu document ID của giảng viên.');
       setLoading(false);
       return;
     }
-
     setLoading(true);
     try {
-      const result = await fetchUser(uid);
-      setUser(result);
-      setError(result ? '' : 'Hồ sơ không còn tồn tại.');
+      const result = await fetchLecturer(documentId);
+      setLecturer(result);
+      setError(result ? '' : 'Giảng viên không còn tồn tại.');
     } catch (nextError) {
       setError(getErrorMessage(nextError));
     } finally {
       setLoading(false);
     }
-  }, [uid]);
+  }, [documentId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      void loadUser();
-    }, [loadUser]),
-  );
+  useFocusEffect(useCallback(() => { void loadLecturer(); }, [loadLecturer]));
 
   function confirmDelete() {
-    if (!user || deleting) return;
+    if (!lecturer || deleting) return;
     Alert.alert(
-      'Xóa hồ sơ?',
-      `${user.username} sẽ bị xóa khỏi collection users. Tài khoản Admin Authentication không bị thay đổi.`,
+      'Xóa giảng viên?',
+      `${lecturer.IDGV} — ${lecturer.Fullname} sẽ bị xóa khỏi collection GiangVien.`,
       [
         { text: 'Hủy', style: 'cancel' },
         {
@@ -89,9 +82,9 @@ export default function UserDetailScreen() {
           onPress: async () => {
             setDeleting(true);
             try {
-              await deleteManagedUser(user.id);
-              Alert.alert('Đã xóa', 'Hồ sơ demo đã được xóa khỏi Firestore.');
-              router.replace('/users');
+              await deleteLecturer(lecturer.id);
+              Alert.alert('Đã xóa', 'Giảng viên đã được xóa khỏi Firestore.');
+              router.replace('/lecturers');
             } catch (nextError) {
               Alert.alert('Không thể xóa', getErrorMessage(nextError));
             } finally {
@@ -107,41 +100,37 @@ export default function UserDetailScreen() {
     <AdminGate>
       <AppScreen
         right={<IconButton icon="close" label="Đóng" onPress={() => router.back()} />}
-        subtitle="Hồ sơ demo Firestore — không phải tài khoản đăng nhập"
-        title="Chi tiết hồ sơ">
+        subtitle="Thông tin collection GiangVien"
+        title="Chi tiết giảng viên">
         {loading ? (
-          <LoadingView label="Đang tải chi tiết..." />
-        ) : error || !user ? (
+          <LoadingView label="Đang tải chi tiết giảng viên..." />
+        ) : error || !lecturer ? (
           <StateView
             actionLabel="Quay lại danh sách"
             icon="alert-circle-outline"
-            message={error || 'Không tìm thấy hồ sơ.'}
-            onAction={() => router.replace('/users')}
+            message={error || 'Không tìm thấy giảng viên.'}
+            onAction={() => router.replace('/lecturers')}
             title="Không thể hiển thị"
           />
         ) : (
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.profileCard}>
-              <UserAvatar size={124} uri={user.image} username={user.username} />
-              <Text style={styles.username}>{user.username}</Text>
-              <Text style={styles.email}>{user.email}</Text>
+              <LecturerAvatar fullname={lecturer.Fullname} size={124} uri={lecturer.Image} />
+              <Text style={styles.fullname}>{lecturer.Fullname}</Text>
+              <Text style={styles.lecturerId}>{lecturer.IDGV}</Text>
             </View>
 
             <View style={styles.detailsCard}>
-              <DetailRow icon="person-outline" label="Username" value={user.username} />
+              <DetailRow icon="id-card-outline" label="IDGV" value={lecturer.IDGV} />
               <View style={styles.divider} />
-              <DetailRow icon="mail-outline" label="Email" value={user.email} />
+              <DetailRow icon="person-outline" label="Fullname" value={lecturer.Fullname} />
               <View style={styles.divider} />
-              <DetailRow
-                icon="lock-closed-outline"
-                label="Password demo"
-                value={PASSWORD_PLACEHOLDER}
-              />
+              <DetailRow icon="layers-outline" label="SumClass" value={String(lecturer.SumClass)} />
               <View style={styles.divider} />
               <DetailRow
                 icon="image-outline"
                 label="Image"
-                value={user.image ? 'JPEG data URI đã lưu trong Firestore' : 'Chưa có ảnh đại diện'}
+                value={lecturer.Image ? 'Đã lưu ảnh JPEG trong Firestore' : 'Chưa có ảnh'}
               />
             </View>
 
@@ -149,7 +138,7 @@ export default function UserDetailScreen() {
               <PrimaryButton
                 icon="create-outline"
                 label="Chỉnh sửa"
-                onPress={() => router.push({ pathname: '/user-form', params: { uid: user.id } })}
+                onPress={() => router.push({ pathname: '/lecturer-form', params: { id: lecturer.id } })}
                 style={styles.flexButton}
                 variant="secondary"
               />
@@ -180,8 +169,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.xlarge,
   },
-  username: { color: colors.text, fontSize: 24, fontWeight: '900', marginTop: spacing.small },
-  email: { color: colors.textMuted, fontSize: 15 },
+  fullname: { color: colors.text, fontSize: 24, fontWeight: '900', marginTop: spacing.small, textAlign: 'center' },
+  lecturerId: { color: colors.primary, fontSize: 15, fontWeight: '800' },
   detailsCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.large,

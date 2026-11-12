@@ -60,10 +60,10 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
             <View style={styles.logo}>
-              <Ionicons color="#FFFFFF" name="people" size={42} />
+              <Ionicons color="#FFFFFF" name="school" size={42} />
             </View>
-            <Text style={styles.title}>User Management</Text>
-            <Text style={styles.subtitle}>Đăng nhập bằng tài khoản Admin để quản lý hồ sơ demo.</Text>
+            <Text style={styles.title}>QL Học Phần</Text>
+            <Text style={styles.subtitle}>Đăng nhập Admin để quản lý collection GiangVien.</Text>
           </View>
 
           <View style={styles.card}>
